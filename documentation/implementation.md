@@ -1,4 +1,5 @@
 ==========Detailed Configuration Explanations==========
+
 This project sets up HAProxy as a load balancer for two web servers (Apache2 & Nginx) on Google Cloud Platform (GCP).
 
 📌 Step 1: Create Three VMs on GCP
@@ -98,5 +99,7 @@ Run Load Test:
 
 🚀 Note that:
 Nginx is hosted on 10.128.0.3 (Internal IP) or 34.136.46.2 (External IP)
+
 Apache2 is hosted on 10.128.0.2 (Internal IP) or 35.238.73.183 (External IP)
+
 Haproxy is hosted on 10.128.0.4 (Internal IP) or 35.239.94.162 (External IP)
