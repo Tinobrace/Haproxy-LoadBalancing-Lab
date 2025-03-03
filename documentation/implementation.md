@@ -4,10 +4,13 @@
 This project sets up HAProxy as a load balancer for two web servers (Apache2 & Nginx) on Google Cloud Platform (GCP).
 
 
+
 📌 Step 1: Create Three VMs on GCP
 
 1️⃣ Web Server 1 (apache2-server)
+
 2️⃣ Web Server 2 (nginx-server)
+
 3️⃣ Load Balancer (haproxy-lb)
 
 
@@ -133,9 +136,13 @@ Run Load Test:
      
 🚀 Final Summary
 
+
 ✅ Created 3 VMs (2 Web Servers + 1 HAProxy Load Balancer)
+
 ✅ Configured Apache2 on Port 8000 & Nginx on Port 80
+
 ✅ Installed & Configured HAProxy with Load Balancing
+
 ✅ Tested Load Distribution & HAProxy Monitoring
 
 
