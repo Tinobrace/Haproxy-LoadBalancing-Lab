@@ -1,7 +1,8 @@
-==========Detailed Configuration Explanations==========
+                           ==========Detailed Configuration Explanations==========
 
 
 This project sets up HAProxy as a load balancer for two web servers (Apache2 & Nginx) on Google Cloud Platform (GCP).
+
 
 
 
@@ -146,7 +147,9 @@ Run Load Test:
 ✅ Tested Load Distribution & HAProxy Monitoring
 
 
+
 🎯 Now HAProxy is successfully balancing traffic between Apache2 & Nginx! 
+
 
 
 🚀 Note that:
