@@ -4,9 +4,12 @@
 This document provides a detailed step-by-step guide for setting up HAProxy as a load balancer for two web servers (Apache2 & Nginx), including configuration, testing, and troubleshooting.
 
 
+
 📌 Project Overview
 
+
 🎯 Goal:
+
 Deploy HAProxy as a load balancer for two web servers (Apache2 on port 8000 and Nginx on port 80).
 
 Implement three load-balancing algorithms:
@@ -36,13 +39,18 @@ socat – HAProxy socket communication
 We created three VMs:
 
 1️⃣ HAProxy Load Balancer (haproxy-lb)
+
 2️⃣ Apache2 Web Server (apache2-server)
+
 3️⃣ Nginx Web Server (nginx-server)
+
 
 💡 Each server was assigned an internal IP to communicate within the same VPC.
 
 
+
 📌 Web Server Configuration
+
 
 🔹 2. Install & Configure Apache2 (Port 8000)
 Run on apache2-server:
