@@ -23,7 +23,7 @@ Allow internal traffic between VMs
 
 📌 Step 2: Set Up the Web Servers
 
-✅ Apache2 (Port 8000)
+✅ Apache2 (Port 80)
 
 Run on apache2-server:
      > sudo apt update && sudo apt install apache2 -y
@@ -32,7 +32,7 @@ Run on apache2-server:
 
 Modify to:
 
-     > Listen 0.0.0.0:8000
+     > Listen 0.0.0.0:80
      
 
 Edit Virtual Host:
@@ -42,7 +42,7 @@ Edit Virtual Host:
 
 Modify:
 
-     > <VirtualHost *:8000>
+     > <VirtualHost *:80>
            DocumentRoot /var/www/html
        </VirtualHost>
        
@@ -93,7 +93,7 @@ Paste:
      backend web_servers
          balance roundrobin
          option httpchk GET /
-         server web1 10.128.0.2:8000 check
+         server web1 10.128.0.2:80 check
          server web2 10.128.0.3:80 check
 
          
@@ -140,7 +140,7 @@ Run Load Test:
 
 ✅ Created 3 VMs (2 Web Servers + 1 HAProxy Load Balancer)
 
-✅ Configured Apache2 on Port 8000 & Nginx on Port 80
+✅ Configured Apache2 on Port 80 & Nginx on Port 80
 
 ✅ Installed & Configured HAProxy with Load Balancing
 
@@ -154,8 +154,8 @@ Run Load Test:
 
 🚀 Note that:
 
-Nginx is hosted on 10.128.0.3 (Internal IP) or 34.136.46.2 (External IP)
+Nginx is hosted on 10.128.0.7 (Internal IP) or 34.136.46.2 (External IP)
 
-Apache2 is hosted on 10.128.0.2 (Internal IP) or 35.238.73.183 (External IP)
+Apache2 is hosted on 10.128.0.6 (Internal IP) or 35.238.73.183 (External IP)
 
-Haproxy is hosted on 10.128.0.4 (Internal IP) or 35.239.94.162 (External IP)
+Haproxy is hosted on 10.128.0.5 (Internal IP) or 35.239.94.162 (External IP)

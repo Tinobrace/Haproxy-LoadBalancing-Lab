@@ -1,273 +1,168 @@
-                 ==========📖 HAProxy Load Balancing Lab – Project Documentation==========
-
-
-This document provides a detailed step-by-step guide for setting up HAProxy as a load balancer for two web servers (Apache2 & Nginx), including configuration, testing, and troubleshooting.
-
+===================================HAProxy Load Balancing Project================================
 
 
 📌 Project Overview
 
-
-🎯 Goal:
-
-Deploy HAProxy as a load balancer for two web servers (Apache2 on port 8000 and Nginx on port 80).
-
-Implement three load-balancing algorithms:
-
-Round-Robin
-Least Connections
-IP Hash
-Enable health checks to ensure traffic is routed to only available servers.
-Configure HAProxy stats monitoring.
-Test load distribution using ApacheBench (ab).
+This project demonstrates how to configure HAProxy as a load balancer for Apache2 and Nginx web servers. It implements three load balancing algorithms and includes testing and troubleshooting steps to ensure optimal performance.
 
 
-🛠️ Technologies Used:
+🚀 System Architecture
 
-HAProxy – Load Balancer
-Apache2 – Web Server (port 8000)
-Nginx – Web Server (port 80)
-Ubuntu 22.04 (GCP VM) – Operating System
-Apache Benchmark (ab) – Load Testing Tool
-socat – HAProxy socket communication
+Component	Internal IP	External IP	Port
+HAProxy (Load Balancer)	10.128.0.5	35.239.94.162	80
+Apache2 Web Server	10.128.0.6	34.136.46.2	80
+Nginx Web Server	10.128.0.7	34.31.83.112	80
 
 
-📌 Infrastructure Setup
+🔧 Installation & Configuration
 
-🌍 1. Create Virtual Machines on GCP
+1️⃣ Deploy Web Servers
 
-We created three VMs:
-
-1️⃣ HAProxy Load Balancer (haproxy-lb)
-
-2️⃣ Apache2 Web Server (apache2-server)
-
-3️⃣ Nginx Web Server (nginx-server)
-
-
-💡 Each server was assigned an internal IP to communicate within the same VPC.
-
-
-
-📌 Web Server Configuration
-
-
-🔹 2. Install & Configure Apache2 (Port 8000)
-Run on apache2-server:
-     > sudo apt update
-     > sudo apt install apache2 -y
-
-     
-🔹 Set Apache to listen on port 8000:
-     > sudo nano /etc/apache2/ports.conf
-     
-     
-Change:
-
-    > Listen 0.0.0.0:8000
-    > Listen [::]:8000
-
-    
-🔹 Edit Apache Virtual Host Configuration
-     > sudo nano /etc/apache2/sites-enabled/000-default.conf
-
-     
-Modify:
-     > <VirtualHost *:8000>
-           ServerAdmin webmaster@localhost
-           DocumentRoot /var/www/html
-       </VirtualHost>
-
-       
-🔹 Restart Apache2:
+🔹 Apache2 Setup (on apache2-server)
+     > sudo apt update && sudo apt install apache2 -y
+     > echo "<h1>Apache2 Web Server</h1>" | sudo tee /var/www/html/index.html
      > sudo systemctl restart apache2
 
-     
-🔹 Verify Apache2 is Running on Port 8000
-
-     > curl -I http://localhost:8000/
-
-     
-✅ Expected Output:
-
-     > HTTP/1.1 200 OK
-
-     
-🔹 3. Install & Configure Nginx (Port 80)
-
-Run on nginx-server:
-
-     > sudo apt update
-     > sudo apt install nginx -y
-
-     
-🔹 Edit Nginx Configuration to Serve a Custom Page
-
-     > sudo nano /var/www/html/index.html
-
-     
-Paste:
-
-     > <h1>Nginx Web Server</h1>
-
-     
-🔹 Restart Nginx
-
+🔹 Nginx Setup (on nginx-server)
+     > sudo apt update && sudo apt install nginx -y
+     > echo "<h1>Nginx Web Server</h1>" | sudo tee /var/www/html/index.html
      > sudo systemctl restart nginx
 
-     
-🔹 Verify Nginx is Running
 
-     > curl -I http://localhost/
+✅ Verify Setup:
+     > curl -I http://10.128.0.6/  # Apache2
+     > curl -I http://10.128.0.7/  # Nginx
 
-     
-✅ Expected Output:
 
-     > HTTP/1.1 200 OK
+2️⃣ Install & Configure HAProxy (on haproxy-lb)
 
-     
-📌 HAProxy Configuration
 
-🔹 4. Install & Configure HAProxy
+🔹 Install HAProxy
+     > sudo apt update && sudo apt install haproxy -y
 
-Run on haproxy-lb:
-
-     > sudo apt update
-     > sudo apt install haproxy -y
-
-     
-🔹 Edit HAProxy Configuration
-
+🔹 Configure HAProxy
+Edit HAProxy config file
      > sudo nano /etc/haproxy/haproxy.cfg
-     
-Paste:
 
-     > global
-         log /dev/log local0
-         log /dev/log local1 notice
-         stats socket /run/haproxy/admin.sock mode 660 level admin
-         user haproxy
-         group haproxy
-         daemon
+Paste the following configuration:
 
-     defaults
-         log global
-         mode http
-         option httplog
-         timeout connect 5s
-         timeout client 30s
-         timeout server 30s
-         retries 3
+global
+    stats socket /run/haproxy/admin.sock mode 660 level admin
 
-     frontend http_front
-         bind *:80
-         mode http
-         default_backend web_servers
+defaults
+    mode http
+    timeout connect 5s
+    timeout client 30s
+    timeout server 30s
+
+frontend http_front
+    bind *:80
+    use_backend backend_roundrobin if { hdr(host) -i roundrobin.local }
+    use_backend backend_leastconn if { hdr(host) -i leastconn.local }
+    use_backend backend_iphash if { hdr(host) -i iphash.local }
 
     # HAProxy Statistics
-         stats enable
-         stats uri /haproxy?stats
-         stats refresh 5s
-         stats auth admin:haproxy123
-     
-# Load Balancing Algorithms
+    stats enable
+    stats uri /haproxy?stats
+    stats refresh 5s
+    stats auth admin:haproxy123
 
-# 1️⃣ Round-Robin
-     backend backend_roundrobin
-         balance roundrobin
-         option httpchk GET /health
-         server web1 10.128.0.2:8000 check
-         server web2 10.128.0.3:80 check
+backend backend_roundrobin
+    balance roundrobin
+    option httpchk GET /
+    server web1 10.128.0.6:80 check
+    server web2 10.128.0.7:80 check
 
-# 2️⃣ Least Connections
-     backend backend_leastconn
-         balance leastconn
-         option httpchk GET /health
-         server web1 10.128.0.2:8000 check
-         server web2 10.128.0.3:80 check
+backend backend_leastconn
+    balance leastconn
+    option httpchk GET /
+    server web1 10.128.0.6:80 check
+    server web2 10.128.0.7:80 check
 
-# 3️⃣ IP Hashing
-     backend backend_iphash
-         balance source
-         option httpchk GET /health
-         server web1 10.128.0.2:8000 check
-         server web2 10.128.0.3:80 check
-
-         
-🔹 Restart HAProxy
-
-     > sudo systemctl restart haproxy
-
-     
-✅ Test Load Balancer
-
-     > curl -I http://haproxy-ip/
-
-     
-✅ Expected Output:
-
-     > HTTP/1.1 200 OK
-
-     
-📌 Load Testing HAProxy
+backend backend_iphash
+    balance source
+    option httpchk GET /
+    server web1 10.128.0.6:80 check
+    server web2 10.128.0.7:80 check
 
 
-🔹 5. Install Apache Benchmark (ab)
+✅ Restart HAProxy:
+    > sudo systemctl restart haproxy
 
 
-     > sudo apt install apache2-utils -y
+✅ Enable HAProxy at boot:
+    > sudo systemctl enable haproxy
 
-     
-🔹 6. Run Load Test
 
-     > ab -n 100 -c 10 http://haproxy-ip/
+✅ Check HAProxy status:
+    > sudo systemctl status haproxy
 
-     
-✅ Expected Output:
 
-     > Requests per second: 500 [#/sec]
-       Time per request: 10ms
+📊 Testing & Validation
 
-       
-🔹 Verify HAProxy Load Distribution
+1️⃣ Test Load Balancing Algorithms
 
+🔹 Round-Robin
+     > curl -I -H "Host: roundrobin.local" http://35.239.94.162/
+
+✅ Expected: Alternates between Apache2 & Nginx.
+
+🔹 Least Connections
+     > curl -I -H "Host: leastconn.local" http://35.239.94.162/
+
+✅ Expected: Routes traffic to the server with the fewest active connections.
+
+
+🔹 IP Hashing
+     > curl -I -H "Host: iphash.local" http://35.239.94.162/
+
+
+✅ Expected: Same client IP is always routed to the same backend.
+
+
+2️⃣ Load Testing (Apache Benchmark)
+     > ab -n 1000 -c 50 -H "Host: roundrobin.local" http://35.239.94.162/
+
+✅ Expected: Requests are distributed across both servers.
+
+3️⃣ Monitor HAProxy Performance
+
+🔹 Check Backend Status
      > echo "show stat" | sudo socat unix-connect:/run/haproxy/admin.sock stdio
 
-     
-📌 HAProxy Stats Monitoring
-View HAProxy stats in a browser:
+🔹 View HAProxy Logs
+     > sudo journalctl -xeu haproxy | tail -n 20
 
-     > http://haproxy-ip/haproxy?stats
+🔹 Access HAProxy Web Dashboard
+     > http://35.239.94.162/haproxy?stats
 
-     
-✅ Login:
 
+✅ Login with:
 Username: admin
 Password: haproxy123
 
 
 📌 Final Testing
 
-
 🔹 Verify Load Balancing
 
 Run multiple requests:
 
-     for i in {1..10}; do curl -I http://haproxy-ip/; done
+ for i in {1..10}; do curl -I http://haproxy-ip/; done
 
-     
 ✅ Expected: Some responses from Apache2, some from Nginx.
 
 
-📌 Project Summary
-
-✔ Deployed HAProxy as a Load Balancer
-
-✔ Implemented Round-Robin, LeastConn, and IP Hash
-
-✔ Configured Health Checks
-
-✔ Set Up HAProxy Monitoring
-
+📌 Conclusion
+✔ HAProxy efficiently balances traffic across Apache2 and Nginx.
+✔ Multiple load balancing algorithms ensure high availability.
+✔ Health checks keep the system reliable.
+✔ Testing & monitoring provide performance insights.
 ✔ Tested Load Distribution with Apache Benchmark (ab)
+
+📜 Author
+👤 Valentine Uchenna Ukah
+📧 val.ukah01@gmail.com
+📌 GitHub: https://github.com/Tinobrace/Haproxy-LoadBalancing-Lab
+
 
